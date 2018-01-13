@@ -1,19 +1,20 @@
 import os
 
 from tank.errors import TankError
-from tank_test.tank_test_base import *
+from tank_test.tank_test_base import ClassLevelTankTestBase, TankTestBase, setUpModule
 from tank.platform.validation import *
 from tank_vendor import yaml
 
 import copy
 
-class TestEnvironment(TankTestBase):
+class TestEnvironment(ClassLevelTankTestBase):
     """
     Basic environment tests
     """
 
-    def setUp(self):
-        super(TestEnvironment, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestEnvironment, self).setUpClass()
         self.setup_fixtures()
         
         self.test_env = "test"
@@ -79,10 +80,11 @@ class TestEnvironment(TankTestBase):
                          self.raw_app_metadata["configuration"])
 
 
-class TestDumpEnvironment(TankTestBase):
+class TestDumpEnvironment(ClassLevelTankTestBase):
 
-    def setUp(self):
-        super(TestDumpEnvironment, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestDumpEnvironment, self).setUpClass()
         self.setup_fixtures()
 
         # create env object
@@ -176,14 +178,14 @@ class TestDumpEnvironment(TankTestBase):
         self.assertTrue("test_hook_std_sparse" not in app_settings)
 
 
-class TestUpdateEnvironment(TankTestBase):
+class TestUpdateEnvironment(ClassLevelTankTestBase):
     """
     Tests yaml environment updates
     """
     
-    
-    def setUp(self):
-        super(TestUpdateEnvironment, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestUpdateEnvironment, self).setUpClass()
         self.setup_fixtures()
         
         self.test_env = "test"
@@ -379,28 +381,29 @@ class TestUpdateEnvironment(TankTestBase):
     
     
     
-class TestUpdateEnvironmentRuamelYaml(TestUpdateEnvironment):
+class TestUpdateEnvironmentRuamelYaml(ClassLevelTankTestBase):
     """
     Runs the standard environment Update tests with the
     ruamel parser enabled.
     """
     
-    def setUp(self):
-        super(TestUpdateEnvironmentRuamelYaml, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestUpdateEnvironmentRuamelYaml, self).setUpClass()
         self.env.set_yaml_preserve_mode(True)
     
 
 
 
 
-class TestRuamelParser(TankTestBase):
+class TestRuamelParser(ClassLevelTankTestBase):
     """
     Tests writing yaml files using the ruamel parser
     """
 
-
-    def setUp(self):
-        super(TestRuamelParser, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestRuamelParser, self).setUpClass()
         self.setup_fixtures()
 
     def test_yaml(self):
@@ -435,13 +438,14 @@ class TestRuamelParser(TankTestBase):
 
 
 
-class TestPyYamlParser(TankTestBase):
+class TestPyYamlParser(ClassLevelTankTestBase):
     """
     Tests writing yaml files using the old pyyaml parser
     """
 
-    def setUp(self):
-        super(TestPyYamlParser, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestPyYamlParser, self).setUpClass()
         self.setup_fixtures()
 
     def test_yaml(self):
