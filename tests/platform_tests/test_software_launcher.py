@@ -13,7 +13,8 @@ from __future__ import with_statement
 import logging
 import os
 
-from tank_test.tank_test_base import TankTestBase
+from unittest2 import TestCase
+from tank_test.tank_test_base import ClassLevelTankTestBase
 from tank_test.tank_test_base import setUpModule # noqa
 
 from mock import PropertyMock, patch
@@ -26,9 +27,11 @@ from tank.platform import LaunchInformation
 from tank.errors import TankEngineInitError
 
 
-class TestEngineLauncher(TankTestBase):
-    def setUp(self):
-        super(TestEngineLauncher, self).setUp()
+class TestEngineLauncher(ClassLevelTankTestBase):
+
+    @classmethod
+    def setUpClass(self):
+        super(TestEngineLauncher, self).setUpClass()
         self.setup_fixtures()
 
         # setup shot
@@ -130,19 +133,19 @@ class TestEngineLauncher(TankTestBase):
             ctx = self.tk.context_from_entity(entity["type"], entity["id"])
             # Monkey patch the pipeline configuration object to provide a set of bundle cache
             # fallback paths to serialize into environment variables.
-            self.tk.pipeline_configuration.get_bundle_cache_fallback_paths = \
-                lambda: MOCKED_FALLBACKS
-            launcher = create_engine_launcher(self.tk, ctx, self.engine_name)
-            env = launcher.get_standard_plugin_environment()
-            expected_env = {
-                "SHOTGUN_PIPELINE_CONFIGURATION_ID": "123",
-                "SHOTGUN_SITE": "http://unit_test_mock_sg",
-                "SHOTGUN_ENTITY_TYPE": entity["type"],
-                "SHOTGUN_ENTITY_ID": str(entity["id"]),
-                "SHOTGUN_ENTITY_ID": str(entity["id"]),
-                "SHOTGUN_BUNDLE_CACHE_FALLBACK_PATHS": os.pathsep.join(MOCKED_FALLBACKS)
-            }
-            self.assertDictEqual(expected_env, env)
+            # Since the tk instance is share between test, path it locally.
+            with patch.object(self.tk.pipeline_configuration, "get_bundle_cache_fallback_paths", return_value=MOCKED_FALLBACKS):
+                launcher = create_engine_launcher(self.tk, ctx, self.engine_name)
+                env = launcher.get_standard_plugin_environment()
+                expected_env = {
+                    "SHOTGUN_PIPELINE_CONFIGURATION_ID": "123",
+                    "SHOTGUN_SITE": "http://unit_test_mock_sg",
+                    "SHOTGUN_ENTITY_TYPE": entity["type"],
+                    "SHOTGUN_ENTITY_ID": str(entity["id"]),
+                    "SHOTGUN_ENTITY_ID": str(entity["id"]),
+                    "SHOTGUN_BUNDLE_CACHE_FALLBACK_PATHS": os.pathsep.join(MOCKED_FALLBACKS)
+                }
+                self.assertDictEqual(expected_env, env)
 
     def test_get_standard_plugin_environment_empty(self):
         """
@@ -155,6 +158,7 @@ class TestEngineLauncher(TankTestBase):
             "SHOTGUN_PIPELINE_CONFIGURATION_ID": "123",
             "SHOTGUN_SITE": "http://unit_test_mock_sg"
         }
+        print(env)
         self.assertDictEqual(expected_env, env)
 
     def test_minimum_version(self):
@@ -333,10 +337,11 @@ class TestEngineLauncher(TankTestBase):
             )
 
 
-class TestSoftwareVersion(TankTestBase):
-    def setUp(self):
-        super(TestSoftwareVersion, self).setUp()
 
+class TestSoftwareVersion(TestCase):
+
+    @classmethod
+    def setUpClass(self):
         self._version = "v293.49.2.dev"
         self._product = "My Custom App"
         self._path = "/my/path/to/app/{version}/my_custom_app"
@@ -360,9 +365,11 @@ class TestSoftwareVersion(TankTestBase):
         self.assertEqual(self.args, sw_version.args)
 
 
-class TestLaunchInformation(TankTestBase):
-    def setUp(self):
-        super(TestLaunchInformation, self).setUp()
+class TestLaunchInformation(TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        super(TestLaunchInformation, self).setUpClass()
 
         self._path = "/my/path/to/app/{version}/my_custom_app"
         self._args = "-t 1-30 --show_all -v --select ship"
