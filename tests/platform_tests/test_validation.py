@@ -1,19 +1,17 @@
 import os
 
 from tank.templatekey import StringKey
-from tank_test.tank_test_base import TankTestSimple, TankTestBase
+from tank_test.tank_test_base import TankTestSimple, TankTestBase, ClassLevelTankTestBase
 from tank_test.tank_test_base import setUpModule # noqa
 from tank.platform.validation import *
 
 import tank
 
 
-class TestValidateSchema(TankTestSimple):
-    def setUp(self):
-        super(TestValidateSchema, self).setUp()
-        
-        # The validation code needs a name for error reporting
-        self.app_name = "test_app"
+class TestValidateSchema(ClassLevelTankTestBase):
+
+    # The validation code needs a name for error reporting
+    app_name = "test_app"
     
     def test_invalid_schema_type(self):
         key = "test_setting"
@@ -143,9 +141,11 @@ class TestValidateSchema(TankTestSimple):
         self.check_error_message(TankError, expected_msg, validate_schema, self.app_name, schema)
 
 
-class TestValidateSettings(TankTestBase):
-    def setUp(self):
-        super(TestValidateSettings, self).setUp()
+class TestValidateSettings(ClassLevelTankTestBase):
+
+    @classmethod
+    def setUpClass(self):
+        super(TestValidateSettings, self).setUpClass()
         # set up data so as to supply a valid context
         seq = {"type":"Sequence", "name":"seq_name", "id":3}
         seq_path = os.path.join(self.project_root, "sequence/Seq")
@@ -359,13 +359,14 @@ class TestValidateSettings(TankTestBase):
         self.check_error_message(TankError, expected_msg, validate_settings, self.app_name, self.tk, self.context, schema, settings)
 
 
-class TestValidateContext(TankTestBase):
+class TestValidateContext(ClassLevelTankTestBase):
     """Tests related to validating context through the config.validate_and_populate_config function. 
 
     These tests are seperated so as to enable different setup.
     """
-    def setUp(self):
-        super(TestValidateContext, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestValidateContext, self).setUpClass()
         self.setup_fixtures()
 
         self.app_name = "test_app"
@@ -517,10 +518,11 @@ class TestValidateContext(TankTestBase):
         validate_settings(self.app_name, self.tk, self.context, schema, self.config)
 
 
-class TestValidateFixtures(TankTestBase):
+class TestValidateFixtures(ClassLevelTankTestBase):
     """Integration test running validation on test fixtures."""
-    def setUp(self):
-        super(TestValidateFixtures, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestValidateFixtures, self).setUpClass()
         self.setup_fixtures()
 
         # setup shot
