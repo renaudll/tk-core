@@ -14,6 +14,7 @@ Base class for engine and app testing
 
 from __future__ import with_statement, print_function
 
+import copy
 import sys
 import os
 import time
@@ -220,7 +221,41 @@ def setUpModule():
     os.makedirs(os.path.join(install_dir, "engines"))
 
 
-class TankTestCore(unittest.TestCase):
+class TankTestBase(unittest.TestCase):
+    """
+    Test base class which manages fixtures for tank related tests.
+    """
+
+    SHOTGUN_HOME = "SHOTGUN_HOME"
+
+    def __init__(self, *args, **kws):
+        super(TankTestBase, self).__init__(*args, **kws)
+        self._init()
+
+    def _init(self):
+
+        # Below are attributes which will be set during setUp
+
+        self._cleanup_funcs = []
+
+        # Path to temp directory
+        self.tank_temp = None
+        # fake project entity dictionary
+        self.project = None
+        self.project_root = None
+        # alternate project roots for multi-root tests
+        self.alt_root_1 = None
+        self.alt_root_2 = None
+        # project level config directories
+        self.project_config = None
+
+        # path to the tk-core repo root point
+        self.tank_source_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+        # where to go for test data
+        self.fixtures_root = os.environ["TK_TEST_FIXTURES"]
+
+        self._tear_down_called = False
 
     SHOTGUN_HOME = "SHOTGUN_HOME"
 
@@ -272,7 +307,11 @@ class TankTestCore(unittest.TestCase):
         """
         patch = mock.patch(to_mock, return_value=return_value)
         patch.start()
-        self.addCleanup(patch.stop)
+        self.addPostTestCleanup(self, patch.stop)
+
+    @staticmethod
+    def addPostTestCleanup(scope, func):
+        scope._cleanup_funcs.append(func)
 
     def add_to_sg_mock_db(self, entities):
         """
@@ -321,248 +360,8 @@ class TankTestCore(unittest.TestCase):
 
             self.mockgun._db[et][eid] = entity
 
-
-# class TankTestSimple(TankTestCore):
-
-#     def __init__(self, *args, **kws):
-
-#         super(TankTestSimple, self).__init__(*args, **kws)
-
-#         # Below are attributes which will be set during setUp
-
-#         # Path to temp directory
-#         self.tank_temp = None
-#         # fake project entity dictionary
-#         self.project = None
-#         self.project_root = None
-#         # alternate project roots for multi-root tests
-#         self.alt_root_1 = None
-#         self.alt_root_2 = None
-#         # project level config directories
-#         self.project_config = None
-
-#         # path to the tk-core repo root point
-#         self.tank_source_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-#         # where to go for test data
-#         self.fixtures_root = os.environ["TK_TEST_FIXTURES"]
-
-#         self._tear_down_called = False
-
-#     @timer.clock_func("TankTestSimple.setUp")
-#     def setUp(self, parameters=None):
-#         """
-#         Sets up a Shotgun Mockgun instance with a project and a basic project scaffold on
-#         disk.
-
-#         :param parameters: Dictionary with additional parameters to control the setup.
-#                            The method currently supports the following parameters:
-
-#                            - 'project_tank_name': 'name' - Set the tank_name of the project to
-#                                                   something explicit. If not specified, this
-#                                                   will default to 'project_code'
-
-#                            - 'mockgun_schema_path': '/path/to/file' - Pass a specific schema to use with mockgun.
-#                                                     If not specified, the tk-core fixture schema
-#                                                     will be used.
-
-#                            - 'mockgun_schema_entity_path': '/path/to/file' - Pass a specific entity schema to use with
-#                                                            mockgun. If not specified, the tk-core fixture schema
-#                                                            will be used.
-#                            - 'primary_root_name': 'name' - Set the primary root name, default to 'unit_tests'.
-
-
-#         """
-#         self.addCleanup(self._assert_teardown_called)
-#         # Override SHOTGUN_HOME so that unit tests can be sandboxed.
-#         self._old_shotgun_home = os.environ.get(self.SHOTGUN_HOME)
-#         os.environ[self.SHOTGUN_HOME] = TANK_TEMP
-
-#         # Make sure the global settings instance has been reset so anything from a previous test doesn't
-#         # leak into the next one.
-#         UserSettings.clear_singleton()
-
-#         parameters = parameters or {}
-
-#         if "project_tank_name" in parameters:
-#             project_tank_name = parameters["project_tank_name"]
-#         else:
-#             # default project name
-#             project_tank_name = "project_code"
-
-#         # now figure out mockgun location
-#         # 1. see if we have it explicitly specified in the parameters
-#         # 2. if not, check if the fixtures location has a mockgun folder
-#         # 3. if not, fall back on built in mockgun fixtures
-
-#         if "mockgun_schema_path" in parameters:
-#             mockgun_schema_path = parameters["mockgun_schema_path"]
-
-#         elif os.path.exists(os.path.join(self.fixtures_root, "mockgun")):
-#             mockgun_schema_path = os.path.join(
-#                 self.fixtures_root,
-#                 "mockgun",
-#                 "schema.pickle"
-#             )
-
-#         else:
-#             # use the std core fixtures
-#             mockgun_schema_path = os.path.join(
-#                 self.tank_source_path,
-#                 "tests",
-#                 "fixtures",
-#                 "mockgun",
-#                 "schema.pickle"
-#             )
-
-#         if "mockgun_schema_entity_path" in parameters:
-#             mockgun_schema_entity_path = parameters["mockgun_schema_entity_path"]
-
-#         elif os.path.exists(os.path.join(self.fixtures_root, "mockgun")):
-#             mockgun_schema_entity_path = os.path.join(
-#                 self.fixtures_root,
-#                 "mockgun",
-#                 "schema_entity.pickle"
-#             )
-
-#         else:
-#             # use the std core fixtures
-#             mockgun_schema_entity_path = os.path.join(
-#                 self.tank_source_path,
-#                 "tests",
-#                 "fixtures",
-#                 "mockgun",
-#                 "schema_entity.pickle"
-#             )
-
-#         # The name to use for our primary storage
-#         self.primary_root_name = parameters.get("primary_root_name", "unit_tests")
-
-#         # set up mockgun to use our schema
-#         mockgun.Shotgun.set_schema_paths(mockgun_schema_path, mockgun_schema_entity_path)
-
-#         self.tank_temp = TANK_TEMP
-
-#         self.cache_root = os.path.join(self.tank_temp, "cache_root")
-
-#         # Mock this so that authentication manager works even tough we are not in a config.
-#         # If we don't mock it than the path cache calling get_current_user will fail.
-#         self._mock_return_value(
-#             "tank.util.shotgun.connection.get_associated_sg_config_data",
-#             {"host": "https://somewhere.shotgunstudio.com"}
-#         )
-
-#         # define entity for test project
-#         self.project = {
-#             "type": "Project",
-#             "id": 1,
-#             "tank_name": project_tank_name,
-#             "name": "project_name",
-#             "archived": False,
-#         }
-
-#         self.project_root = os.path.join(self.tank_temp, self.project["tank_name"].replace("/", os.path.sep))
-
-#         self.pipeline_config_root = os.path.join(self.tank_temp, "pipeline_configuration")
-
-#         # project level config directories
-#         self.project_config = os.path.join(self.pipeline_config_root, "config")
-
-#         # define entity for pipeline configuration
-#         self.sg_pc_entity = {"type": "PipelineConfiguration",
-#                              "code": "Primary",
-#                              "id": 123,
-#                              "project": self.project,
-#                              "windows_path": self.pipeline_config_root,
-#                              "mac_path": self.pipeline_config_root,
-#                              "linux_path": self.pipeline_config_root}
-
-#         # clear bundle in-memory cache
-#         sgtk.descriptor.io_descriptor.factory.g_cached_instances = {}
-
-#         # set up mockgun and make sure shotgun connection calls route via mockgun
-#         self.mockgun = mockgun.Shotgun("http://unit_test_mock_sg", "mock_user", "mock_key")
-#         # fake a version response from the server
-#         self.mockgun.server_info = {"version": (7, 0, 0)}
-
-#         self._mock_return_value("tank.util.shotgun.connection.get_associated_sg_base_url", "http://unit_test_mock_sg")
-#         self._mock_return_value("tank.util.shotgun.connection.create_sg_connection", self.mockgun)
-#         self._mock_return_value("tank.util.shotgun.get_associated_sg_base_url", "http://unit_test_mock_sg")
-#         self._mock_return_value("tank.util.shotgun.create_sg_connection", self.mockgun)
-
-#         # add pipeline configuration
-#         self.add_to_sg_mock_db(self.sg_pc_entity)
-
-#         # add local storage
-#         self.primary_storage = {"type": "LocalStorage",
-#                                 "id": 7777,
-#                                 "code": self.primary_root_name,
-#                                 "windows_path": self.tank_temp,
-#                                 "linux_path": self.tank_temp,
-#                                 "mac_path": self.tank_temp}
-
-#         self.add_to_sg_mock_db(self.primary_storage)
-
-#         # back up the authenticated user in case a unit test doesn't clean up correctly.
-#         self._authenticated_user = sgtk.get_authenticated_user()
-
-#     @timer.clock_func("TankTestSimple.tearDown")
-#     def tearDown(self):
-#         """
-#         Cleans up after tests.
-#         """
-#         self._tear_down_called = True
-#         sgtk.set_authenticated_user(self._authenticated_user)
-
-#         # clear global shotgun accessor
-#         tank.util.shotgun.connection._g_sg_cached_connections = threading.local()
-
-#         if self._old_shotgun_home is not None:
-#             os.environ[self.SHOTGUN_HOME] = self._old_shotgun_home
-#         else:
-#             del os.environ[self.SHOTGUN_HOME]
-
-#     def _assert_teardown_called(self):
-#         """
-#         Ensures tear down has been called. Called during cleanup, which is executed after tear down.
-#         """
-#         self.assertTrue(self._tear_down_called)
-
-
-class TankTestBase(TankTestCore):
-    """
-    Test base class which manages fixtures for tank related tests.
-    """
-
-    SHOTGUN_HOME = "SHOTGUN_HOME"
-
-    def __init__(self, *args, **kws):
-
-        super(TankTestBase, self).__init__(*args, **kws)
-
-        # Below are attributes which will be set during setUp
-
-        # Path to temp directory
-        self.tank_temp = None
-        # fake project entity dictionary
-        self.project = None
-        self.project_root = None
-        # alternate project roots for multi-root tests
-        self.alt_root_1 = None
-        self.alt_root_2 = None
-        # project level config directories
-        self.project_config = None
-
-        # path to the tk-core repo root point
-        self.tank_source_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-        # where to go for test data
-        self.fixtures_root = os.environ["TK_TEST_FIXTURES"]
-
-        self._tear_down_called = False
-
     @timer.clock_func("TankTestBase.setUp")
-    def setUp(self, parameters=None, do_io=True):
+    def setUp(self, parameters=None, do_io=False):
         """
         Sets up a Shotgun Mockgun instance with a project and a basic project scaffold on
         disk.
@@ -585,7 +384,7 @@ class TankTestBase(TankTestCore):
 
 
         """
-        self.addCleanup(self._assert_teardown_called)
+        self.addPostTestCleanup(self, self._assert_teardown_called)
         # Override SHOTGUN_HOME so that unit tests can be sandboxed.
         self._old_shotgun_home = os.environ.get(self.SHOTGUN_HOME)
         os.environ[self.SHOTGUN_HOME] = TANK_TEMP
@@ -822,6 +621,13 @@ class TankTestBase(TankTestCore):
                 os.environ[self.SHOTGUN_HOME] = self._old_shotgun_home
             else:
                 del os.environ[self.SHOTGUN_HOME]
+
+            # Call all the cleanup functions
+            for func in self._cleanup_funcs[::-1]:
+                try:
+                    func()
+                except:
+                    pass
 
     @timer.clock_func("TankTestBase.setup_fixtures")
     def setup_fixtures(self, name='config', parameters=None):
@@ -1119,6 +925,49 @@ def _move_data(path):
                     except WindowsError:
                         time.sleep(count * 2)
             os.rename(path, backup_path)
+
+
+def create_class_level_tank_test_base():
+
+    attrs = {k: v for k, v in TankTestBase.__dict__.iteritems() if not k.endswith("__")}
+
+    init_func = attrs["_init"]
+    del attrs["_init"]
+
+    set_up_func = attrs["setUp"]
+
+    def setUpClass(cls):
+        init_func(cls)
+        set_up_func(cls, do_io=True)
+
+    attrs["setUpClass"] = classmethod(setUpClass)
+    attrs["tearDownClass"] = classmethod(attrs["tearDown"])
+
+    for method in [
+        "_assert_teardown_called", "setup_fixtures", "_setup_fixtures",
+        "setup_multi_root_fixtures", "add_production_path", "add_to_path_cache",
+        "debug_dump", "_move_project_data", "reload_pipeline_config", "create_file",
+        "_mock_return_value", "add_to_sg_mock_db", "_copy_folder"
+    ]:
+        attrs[method] = classmethod(attrs[method])
+
+    attrs["_backup_mockgun"] = False
+
+    def setUp(self):
+        if self._backup_mockgun:
+            self._mockgun_backup = copy.deepcopy(self.mockgun._db)
+
+    def tearDown(self):
+        if self._backup_mockgun:
+            self.mockgun._db = self._mockgun_backup
+
+    attrs["setUp"] = setUp
+    attrs["tearDown"] = tearDown
+
+    return type("ClassLevelTankTestBase", (unittest.TestCase,), attrs)
+
+
+ClassLevelTankTestBase = create_class_level_tank_test_base()
 
 
 class TankTestSimple(TankTestBase):

@@ -22,17 +22,20 @@ from sgtk.util import ShotgunPath
 from sgtk import LogManager
 
 from tank_test.tank_test_base import setUpModule # noqa
-from tank_test.tank_test_base import TankTestBase
+from tank_test.tank_test_base import TankTestBase, ClassLevelTankTestBase
 
 
-class TestResolverBase(TankTestBase):
+class TestResolverBase(ClassLevelTankTestBase):
     """
     Base class for resolver tests
     """
 
+    @classmethod
+    def setUpClass(cls):
+        ClassLevelTankTestBase.setUpClass()
+
     def setUp(self):
         super(TestResolverBase, self).setUp()
-
         self.install_root = os.path.join(
             self.tk.pipeline_configuration.get_install_location(),
             "install"
@@ -105,6 +108,8 @@ class TestUserRestriction(TestResolverBase):
     """
     Testing the logic around user restrictions
     """
+
+    _backup_mockgun = True
 
     def setUp(self):
         super(TestUserRestriction, self).setUp()
@@ -338,6 +343,8 @@ class TestResolverPriority(TestResolverBase):
     4. Pipeline configuration for site.
     """
 
+    _backup_mockgun = True
+
     PROJECT_PC_PATH = "project_pc_path"
 
     def _create_project_pc(self):
@@ -545,12 +552,8 @@ class TestResolverPriority(TestResolverBase):
 
         primaries = [
             {"code": "Primary", "plugin_ids": "foo.bar", "id": 1},
-            {"code": "Primary", "plugin_ids": "foo.bar", "id": 2},
             {"code": "Primary", "plugin_ids": None, "id": 3},
-
-            {"code": "Primary", "plugin_ids": "foo.bar", "id": 4},
-            {"code": "Primary", "plugin_ids": "foo.bar", "id": 5},
-            {"code": "Primary", "plugin_ids": None, "id": 6}
+            {"code": "Primary", "plugin_ids": None, "id": 6}          
         ]
         for mixed_primaries in itertools.permutations(primaries):
             self.assertEqual(self.resolver._pick_primary_pipeline_config(mixed_primaries, "something")["id"], 3)
@@ -586,6 +589,8 @@ class TestPipelineLocationFieldPriority(TestResolverBase):
     """
     Tests the field priority between descriptor, xxx_path and uploaded_config
     """
+
+    _backup_mockgun = True
 
     @patch("os.path.isdir", return_value=True)
     def test_path_override(self, _):
@@ -868,7 +873,7 @@ class TestResolvedConfiguration(TankTestBase):
     """
 
     def setUp(self):
-        super(TestResolvedConfiguration, self).setUp()
+        super(TestResolvedConfiguration, self).setUp(do_io=True)
 
         self._tmp_bundle_cache = os.path.join(self.tank_temp, "bundle_cache")
         self._resolver = sgtk.bootstrap.resolver.ConfigurationResolver(
@@ -937,7 +942,7 @@ class TestResolvedLatestConfiguration(TankTestBase):
     """
 
     def setUp(self):
-        super(TestResolvedLatestConfiguration, self).setUp()
+        super(TestResolvedLatestConfiguration, self).setUp(do_io=True)
 
         self._tmp_bundle_cache = os.path.join(self.tank_temp, "bundle_cache")
         self._resolver = sgtk.bootstrap.resolver.ConfigurationResolver(

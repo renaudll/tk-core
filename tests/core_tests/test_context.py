@@ -13,7 +13,7 @@ from __future__ import with_statement
 import os
 import copy
 
-from tank_test.tank_test_base import TankTestBase, setUpModule # noqa
+from tank_test.tank_test_base import TankTestBase, ClassLevelTankTestBase, setUpModule # noqa
 
 from mock import Mock, patch
 
@@ -26,9 +26,10 @@ from tank_vendor import yaml
 from tank.authentication import ShotgunAuthenticator
 
 
-class TestContext(TankTestBase):
+class TestContext(object):
+
+    @staticmethod
     def setUp(self):
-        super(TestContext, self).setUp()
 
         self.keys = {"Sequence": StringKey("Sequence"),
                      "Shot": StringKey("Shot"),
@@ -81,9 +82,10 @@ class TestContext(TankTestBase):
         self.add_production_path(alt_2_shot_path, self.shot)
 
 
-class TestEq(TestContext):
+class TestEq(ClassLevelTankTestBase):
     def setUp(self):
         super(TestEq, self).setUp()
+        TestContext.setUp(self)
         # params used in creating contexts
         self.kws = {}
         self.kws["project"] = self.project
@@ -178,9 +180,10 @@ class TestEq(TestContext):
         self.assertTrue(context_1 == context_2)
         self.assertFalse(context_1 != context_2)
 
-class TestUser(TestContext):
+class TestUser(ClassLevelTankTestBase):
     def setUp(self):
         super(TestUser, self).setUp()
+        TestContext.setUp(self)
         kws1 = {}
         kws1["tk"] = self.tk
         kws1["project"] = self.project
@@ -201,14 +204,22 @@ class TestUser(TestContext):
         self.assertEquals(self.current_user["type"], self.context.user["type"])
         self.assertEquals(len(self.context.user), 3)
 
-class TestCreateEmpty(TestContext):
+
+class TestCreateEmpty(ClassLevelTankTestBase):
+
+    def setUp(self):
+        TestContext.setUp(self)
+
     def test_empty_context(self):
         empty_context = context.Context(self.tk)
         result = context.create_empty(self.tk)
         self.assertTrue(empty_context, result)
 
 
-class TestFromPath(TestContext):
+class TestFromPath(ClassLevelTankTestBase):
+
+    def setUp(self):
+        TestContext.setUp(self)
 
     @patch("tank.util.login.get_current_user")
     def test_shot(self, get_current_user):
@@ -259,7 +270,10 @@ class TestFromPath(TestContext):
 
 
 
-class TestFromPathWithPrevious(TestContext):
+class TestFromPathWithPrevious(ClassLevelTankTestBase):
+
+    def setUp(self):
+        TestContext.setUp(self)
 
     @patch("tank.util.login.get_current_user")
     def test_shot(self, get_current_user):
@@ -296,10 +310,11 @@ class TestFromPathWithPrevious(TestContext):
         self.assertEquals(self.current_user["type"], result.user["type"])
 
 
-class TestUrl(TestContext):
+class TestUrl(ClassLevelTankTestBase):
 
     def setUp(self):
         super(TestUrl, self).setUp()
+        TestContext.setUp(self)
 
         # Add task data to mocked shotgun
         self.task = {"id": 1,
@@ -337,13 +352,14 @@ class TestUrl(TestContext):
         self.assertEquals(result.shotgun_url, "http://unit_test_mock_sg/detail/Task/1" )
 
 
-class TestStringRepresentation(TestContext):
+class TestStringRepresentation(ClassLevelTankTestBase):
     """
     Tests string representation of context
     """
 
     def setUp(self):
         super(TestStringRepresentation, self).setUp()
+        TestContext.setUp(self)
 
         # Add task data to mocked shotgun
         self.task = {"id": 1,
@@ -392,10 +408,11 @@ class TestStringRepresentation(TestContext):
         self.assertEquals(str(result), "task_content, Shot shot_name")
 
 
-class TestFromEntity(TestContext):
+class TestFromEntity(ClassLevelTankTestBase):
 
     def setUp(self):
         super(TestFromEntity, self).setUp()
+        TestContext.setUp(self)
 
         # Add task data to mocked shotgun
         self.task = {"id": 1,
@@ -656,9 +673,10 @@ class TestFromEntity(TestContext):
             context.from_entity(self.tk, "PublishedFile", -1)
 
 
-class TestAsTemplateFields(TestContext):
+class TestAsTemplateFields(TankTestBase):
     def setUp(self):
         super(TestAsTemplateFields, self).setUp()
+        TestContext.setUp(self)
         # create a context obj using predefined data
         kws = {}
         kws["tk"] = self.tk
@@ -1071,9 +1089,10 @@ class TestAsTemplateFields(TestContext):
         ctx.as_template_fields(template, validate=False)
 
 
-class TestSerialize(TestContext):
+class TestSerialize(ClassLevelTankTestBase):
     def setUp(self):
         super(TestSerialize, self).setUp()
+        TestContext.setUp(self)
         # params used in creating contexts
         self.kws = {}
         self.kws["tk"] = self.tk
@@ -1146,10 +1165,12 @@ class TestSerialize(TestContext):
             tank.Context.deserialize("ajkadshadsjkhadsjkasd")
 
 
-class TestMultiRoot(TestContext):
+class TestMultiRoot(ClassLevelTankTestBase):
 
-    def setUp(self):
-        super(TestMultiRoot, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestMultiRoot, self).setUpClass()
+        TestContext.setUp(self)
 
         self.setup_multi_root_fixtures()
 
