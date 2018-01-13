@@ -20,7 +20,7 @@ import threading
 import random
 import time
 
-from tank_test.tank_test_base import TankTestBase, skip_if_pyside_missing
+from tank_test.tank_test_base import TankTestBase, ClassLevelTankTestBase, skip_if_pyside_missing
 from tank_test.tank_test_base import setUpModule # noqa
 
 import contextlib
@@ -31,16 +31,17 @@ from tank.errors import TankError
 import mock
 
 
-class TestEngineBase(TankTestBase):
+class TestEngineBase(ClassLevelTankTestBase):
     """
     Sets up and tears down engine-based unit tests.
     """
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         """
         Sets up a few entities so we can create a vaid context.
         """
-        super(TestEngineBase, self).setUp()
+        super(TestEngineBase, self).setUpClass()
 
         self.setup_fixtures()
 
@@ -73,10 +74,6 @@ class TestEngineBase(TankTestBase):
         cur_engine = tank.platform.current_engine()
         if cur_engine:
             cur_engine.destroy()
-        os.remove(self.test_resource)
-
-        # important to call base class so it can clean up memory
-        super(TestEngineBase, self).tearDown()
 
 
 class TestStartEngine(TestEngineBase):
