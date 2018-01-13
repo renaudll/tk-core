@@ -361,7 +361,7 @@ class TankTestBase(unittest.TestCase):
             self.mockgun._db[et][eid] = entity
 
     @timer.clock_func("TankTestBase.setUp")
-    def setUp(self, parameters=None, do_io=False):
+    def setUp(self, parameters=None, do_io=True):
         """
         Sets up a Shotgun Mockgun instance with a project and a basic project scaffold on
         disk.
