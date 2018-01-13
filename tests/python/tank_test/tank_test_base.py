@@ -936,9 +936,9 @@ def create_class_level_tank_test_base():
 
     set_up_func = attrs["setUp"]
 
-    def setUpClass(cls):
+    def setUpClass(cls, parameters=None):
         init_func(cls)
-        set_up_func(cls, do_io=True)
+        set_up_func(cls, parameters=parameters, do_io=True)
 
     attrs["setUpClass"] = classmethod(setUpClass)
     attrs["tearDownClass"] = classmethod(attrs["tearDown"])

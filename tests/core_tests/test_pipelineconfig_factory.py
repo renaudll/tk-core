@@ -16,16 +16,17 @@ import tank
 from tank.api import Tank
 from tank.errors import TankInitError
 
-from tank_test.tank_test_base import TankTestBase, setUpModule # noqa
+from tank_test.tank_test_base import ClassLevelTankTestBase, setUpModule # noqa
 
 
-class TestTankFromPath(TankTestBase):
+class TestTankFromPath(ClassLevelTankTestBase):
     """
     Tests basic tank from path behavior.
     """
 
-    def setUp(self):
-        super(TestTankFromPath, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestTankFromPath, self).setUpClass()
         self.setup_multi_root_fixtures()
 
     def test_primary_branch(self):
@@ -62,13 +63,14 @@ class TestTankFromPath(TankTestBase):
         self.assertRaises(TankInitError, tank.tank_from_path, self.tank_temp)
 
 
-class TestArchivedProjects(TankTestBase):
+class TestArchivedProjects(ClassLevelTankTestBase):
     """
     Tests that archived projects are not visible
     """
 
-    def setUp(self):
-        super(TestArchivedProjects, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestArchivedProjects, self).setUpClass()
         self.setup_fixtures()
 
         # archive default project
@@ -95,13 +97,14 @@ class TestArchivedProjects(TankTestBase):
         self.assertEquals(result.pipeline_configuration.get_shotgun_id(), self.sg_pc_entity["id"])
 
 
-class TestTankFromEntity(TankTestBase):
+class TestTankFromEntity(ClassLevelTankTestBase):
     """
     Tests basic tank from entity behavior.
     """
 
-    def setUp(self):
-        super(TestTankFromEntity, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestTankFromEntity, self).setUpClass()
 
         self.setup_fixtures()
 
@@ -207,14 +210,15 @@ class TestTankFromEntity(TankTestBase):
         )
 
 
-class TestTankFromPathDuplicatePcPaths(TankTestBase):
+class TestTankFromPathDuplicatePcPaths(ClassLevelTankTestBase):
     """
     Test behavior and error messages when multiple pipeline
     configurations are pointing at the same location
     """
 
-    def setUp(self):
-        super(TestTankFromPathDuplicatePcPaths, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestTankFromPathDuplicatePcPaths, self).setUpClass()
 
         # define an additional pipeline config with overlapping paths
         self.overlapping_pc = {
@@ -248,7 +252,7 @@ class TestTankFromPathDuplicatePcPaths(TankTestBase):
                                 self.project["id"])
 
 
-class TestTankFromEntityWithMixedSlashes(TankTestBase):
+class TestTankFromEntityWithMixedSlashes(ClassLevelTankTestBase):
     """
     Tests the case where a Windows local storage uses forward slashes.
     """
@@ -276,7 +280,7 @@ class TestTankFromEntityWithMixedSlashes(TankTestBase):
                 del os.environ["TANK_CURRENT_PC"]
 
 
-class TestTankFromPathWindowsNoSlash(TankTestBase):
+class TestTankFromPathWindowsNoSlash(ClassLevelTankTestBase):
     """
     Tests the edge case where a Windows local storage is set to be 'C:'
     """
@@ -284,10 +288,11 @@ class TestTankFromPathWindowsNoSlash(TankTestBase):
     PROJECT_NAME = "temp"
     STORAGE_ROOT = "C:"
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
 
         # set up a project named temp, so that it will end up in c:\temp
-        super(TestTankFromPathWindowsNoSlash, self).setUp(
+        super(TestTankFromPathWindowsNoSlash, self).setUpClass(
             parameters={"project_tank_name": self.PROJECT_NAME}
         )
         
@@ -334,7 +339,7 @@ class TestTankFromPathWindowsNoSlash(TankTestBase):
             self.assertIsInstance(sgtk.sgtk_from_path(test_path), Tank)
 
 
-class TestTankFromPathOverlapStorage(TankTestBase):
+class TestTankFromPathOverlapStorage(ClassLevelTankTestBase):
     """
     Tests edge case with overlapping storages
 
@@ -355,10 +360,11 @@ class TestTankFromPathOverlapStorage(TankTestBase):
 
     """
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
 
         # set up two storages and two projects
-        super(TestTankFromPathOverlapStorage, self).setUp(
+        super(TestTankFromPathOverlapStorage, self).setUpClass(
             parameters={"project_tank_name": "foo"}
         )
 

@@ -20,7 +20,7 @@ from tank.templatekey import StringKey, IntegerKey, SequenceKey
 
 from tank_test.tank_test_base import TankTestBase, ClassLevelTankTestBase, setUpModule # noqa
 
-class TestInit(ClassLevelTankTestBase):
+class TestInit(TankTestBase):
     """Tests basic initialization of the sgtk API"""
 
     def setUp(self):
@@ -34,8 +34,9 @@ class TestInit(ClassLevelTankTestBase):
 
 class TestTemplateFromPath(ClassLevelTankTestBase):
     """Cases testing Tank.template_from_path method"""
-    def setUp(self):
-        super(TestTemplateFromPath, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestTemplateFromPath, self).setUpClass()
         self.setup_fixtures()
 
     def test_defined_path(self):
@@ -63,8 +64,10 @@ class TestTemplateFromPath(ClassLevelTankTestBase):
 
 class TestTemplatesLoaded(ClassLevelTankTestBase):
     """Test case for the loading of templates from project level config."""
-    def setUp(self):
-        super(TestTemplatesLoaded, self).setUp()
+
+    @classmethod
+    def setUpClass(self):
+        super(TestTemplatesLoaded, self).setUpClass()
         self.setup_multi_root_fixtures()
         # some template names we know exist in the standard template
         self.expected_names = ["maya_shot_work", "nuke_shot_work"]
