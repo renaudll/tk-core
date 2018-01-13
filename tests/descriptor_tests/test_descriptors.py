@@ -12,7 +12,7 @@ from __future__ import with_statement
 import os
 import sgtk
 
-from tank_test.tank_test_base import TankTestSimple, TankTestBase, SealedMock
+from tank_test.tank_test_base import TankTestSimple, ClassLevelTankTestBase, TankTestBase, SealedMock
 from tank_test.tank_test_base import setUpModule # noqa
 from tank.errors import TankError
 from tank.descriptor import (
@@ -83,7 +83,7 @@ class TestCachedConfigDescriptor(TankTestSimple):
         )
 
 
-class TestConfigDescriptor(TankTestBase):
+class TestConfigDescriptor(ClassLevelTankTestBase):
 
     def test_legacy_configs(self):
         """
@@ -198,13 +198,18 @@ class TestConfigDescriptor(TankTestBase):
             [self.primary_root_name]
         )
 
+
+class TestMissingRoot(TankTestBase):
+    """
+    Run this test in isolation since it modifies the filesystem.
+    """
     def test_missing_roots_yml(self):
         # Base class already creates a roots.yml file, so we remove it.
         os.unlink(os.path.join(self.pipeline_config_root, "config", "core", "roots.yml"))
         self.assertListEqual(self.tk.configuration_descriptor.required_storages, [])
 
 
-class TestDescriptorSupport(TankTestBase):
+class TestDescriptorSupport(ClassLevelTankTestBase):
 
     def setUp(self, parameters=None):
 
@@ -468,7 +473,7 @@ class TestDescriptorSupport(TankTestBase):
                                 "v1.x.2")
 
 
-class TestConstraintValidation(TankTestBase):
+class TestConstraintValidation(ClassLevelTankTestBase):
     """
     Tests for console utilities.
     """

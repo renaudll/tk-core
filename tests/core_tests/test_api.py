@@ -18,9 +18,9 @@ from tank.api import Tank
 from tank.template import TemplatePath, TemplateString
 from tank.templatekey import StringKey, IntegerKey, SequenceKey
 
-from tank_test.tank_test_base import TankTestBase, setUpModule # noqa
+from tank_test.tank_test_base import TankTestBase, ClassLevelTankTestBase, setUpModule # noqa
 
-class TestInit(TankTestBase):
+class TestInit(ClassLevelTankTestBase):
     """Tests basic initialization of the sgtk API"""
 
     def setUp(self):
@@ -32,7 +32,7 @@ class TestInit(TankTestBase):
         self.assertEquals(self.project_root, tank.project_path)
 
 
-class TestTemplateFromPath(TankTestBase):
+class TestTemplateFromPath(ClassLevelTankTestBase):
     """Cases testing Tank.template_from_path method"""
     def setUp(self):
         super(TestTemplateFromPath, self).setUp()
@@ -61,7 +61,7 @@ class TestTemplateFromPath(TankTestBase):
         self.assertIsInstance(template, TemplateString)
 
 
-class TestTemplatesLoaded(TankTestBase):
+class TestTemplatesLoaded(ClassLevelTankTestBase):
     """Test case for the loading of templates from project level config."""
     def setUp(self):
         super(TestTemplatesLoaded, self).setUp()
@@ -89,10 +89,12 @@ class TestTemplatesLoaded(TankTestBase):
         self.assertEquals(self.alt_root_1, alt_template.root_path)
 
 
-class TestPathsFromTemplate(TankTestBase):
+class TestPathsFromTemplate(ClassLevelTankTestBase):
     """Tests for tank.paths_from_template using test data based on sg_standard setup."""
-    def setUp(self):
-        super(TestPathsFromTemplate, self).setUp()
+
+    @classmethod
+    def setUpClass(self):
+        super(TestPathsFromTemplate, self).setUpClass()
         self.setup_fixtures()
         # create project data
         # two sequences
@@ -183,10 +185,11 @@ class TestPathsFromTemplate(TankTestBase):
         self.assertNotIn(bad_file_path, result)
 
 
-class TestAbstractPathsFromTemplate(TankTestBase):
+class TestAbstractPathsFromTemplate(ClassLevelTankTestBase):
     """Tests Tank.abstract_paths_from_template method."""
-    def setUp(self):
-        super(TestAbstractPathsFromTemplate, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestAbstractPathsFromTemplate, self).setUpClass()
         self.setup_fixtures()
 
 
@@ -303,7 +306,7 @@ class TestAbstractPathsFromTemplate(TankTestBase):
         self.assertEquals(set(expected), set(result))
 
 
-class TestPathsFromTemplateGlob(TankTestBase):
+class TestPathsFromTemplateGlob(ClassLevelTankTestBase):
     """Tests for Tank.paths_from_template method which check the string sent to glob.glob."""
     def setUp(self):
         super(TestPathsFromTemplateGlob, self).setUp()
@@ -371,10 +374,7 @@ class TestPathsFromTemplateGlob(TankTestBase):
         self.assert_glob(fields, expected_glob, skip_keys)
 
 
-class TestApiProperties(TankTestBase):
-    def setUp(self):
-        super(TestApiProperties, self).setUp()
-
+class TestApiProperties(ClassLevelTankTestBase):
     def test_version_property(self):
         """
         test api.version property
@@ -411,7 +411,6 @@ class TestApiProperties(TankTestBase):
         """
         self.assertEquals(self.tk.roots, {self.primary_root_name: self.project_root})
 
-
     def test_project_path_property(self):
         """
         test api.project_path property
@@ -419,14 +418,10 @@ class TestApiProperties(TankTestBase):
         self.assertEquals(self.tk.project_path, self.project_root)
 
 
-
-class TestApiCache(TankTestBase):
+class TestApiCache(ClassLevelTankTestBase):
     """
     Test the built in instance cache
     """
-    def setUp(self):
-        super(TestApiCache, self).setUp()
-
     def test_get_set(self):
         """
         test api.get_cache_item
@@ -453,7 +448,6 @@ class TestApiCache(TankTestBase):
 
         self.assertEquals(self.tk.get_cache_item("foo"), None)
         self.assertEquals(self.tk.get_cache_item("bar"), None)
-
 
     def test_isolation(self):
         """
@@ -484,8 +478,3 @@ class TestApiCache(TankTestBase):
 
         self.assertEquals(tk.get_cache_item("foo"), None)
         self.assertEquals(tk2.get_cache_item("foo"), None)
-
-
-
-
-

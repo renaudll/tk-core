@@ -19,7 +19,7 @@ import tempfile
 import mock
 import inspect
 
-from tank_test.tank_test_base import *
+from tank_test.tank_test_base import ClassLevelTankTestBase, setUpModule, TankTestBase
 import tank
 from tank.errors import TankError, TankHookMethodDoesNotExistError
 from tank.platform import application, constants, validation
@@ -27,13 +27,14 @@ from tank.template import Template
 from tank.deploy import descriptor
 
 
-class TestApplication(TankTestBase):
+class TestApplication(ClassLevelTankTestBase):
     """
     Base class for Application tests
     """
 
-    def setUp(self):
-        super(TestApplication, self).setUp()
+    @classmethod
+    def setUpClass(self):
+        super(TestApplication, self).setUpClass()
         self.setup_fixtures()
         
         # setup shot
@@ -54,20 +55,13 @@ class TestApplication(TankTestBase):
         fh = open(self.test_resource, "wt")
         fh.write("test")
         fh.close()
-        
+
+    def setUp(self):
         context = self.tk.context_from_path(self.shot_step_path)
         self.engine = tank.platform.start_engine("test_engine", self.tk, context)
 
-        
     def tearDown(self):
-        # engine is held as global, so must be destroyed.
-        cur_engine = tank.platform.current_engine()
-        if cur_engine:
-            cur_engine.destroy()
-        os.remove(self.test_resource)
-
-        # important to call base class so it can clean up memory
-        super(TestApplication, self).tearDown()
+        self.engine.destroy()
 
 
 class TestAppFrameworks(TestApplication):
